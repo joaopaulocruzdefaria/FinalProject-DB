@@ -1,0 +1,176 @@
+## =============================================================================
+## DER — Rede Aérea (Diagrama Entidade-Relacionamento / esquema físico)
+## Render: d2 der.d2 der.svg
+## =============================================================================
+
+direction: right
+
+# ----- ENTIDADES FORTES -----
+aeroporto: {
+  shape: sql_table
+  codigo_iata: char(3) {constraint: primary_key}
+  nome: varchar(120)
+  cidade: varchar(80)
+  pais: varchar(60)
+  fuso_horario: varchar(10)
+}
+
+companhia_aerea: {
+  shape: sql_table
+  id: serial {constraint: primary_key}
+  nome: varchar(120)
+  codigo_iata: char(2) {constraint: unique}
+  pais: varchar(60)
+}
+
+modelo_aeronave: {
+  shape: sql_table
+  id: serial {constraint: primary_key}
+  fabricante: varchar(60)
+  modelo: varchar(60)
+  capacidade: int
+}
+
+aeronave: {
+  shape: sql_table
+  prefixo: varchar(7) {constraint: primary_key}
+  modelo_id: int {constraint: foreign_key}
+  companhia_id: int {constraint: foreign_key}
+  ano_fabricacao: int
+}
+
+rota: {
+  shape: sql_table
+  id: serial {constraint: primary_key}
+  aeroporto_origem: char(3) {constraint: foreign_key}
+  aeroporto_destino: char(3) {constraint: foreign_key}
+  distancia_km: int
+}
+
+voo_programado: {
+  shape: sql_table
+  id: serial {constraint: primary_key}
+  numero_voo: varchar(7)
+  rota_id: int {constraint: foreign_key}
+  companhia_id: int {constraint: foreign_key}
+  hora_partida: time
+  hora_chegada: time
+}
+
+passageiro: {
+  shape: sql_table
+  id: serial {constraint: primary_key}
+  cpf: char(11) {constraint: unique}
+  nome: varchar(120)
+  data_nascimento: date
+}
+
+tripulante: {
+  shape: sql_table
+  id: serial {constraint: primary_key}
+  nome: varchar(120)
+  cargo: varchar(20)
+  num_licenca: varchar(20) {constraint: unique}
+  companhia_id: int {constraint: foreign_key}
+}
+
+# ----- ENTIDADES FRACAS -----
+terminal: {
+  shape: sql_table
+  aeroporto_iata: char(3) {constraint: [primary_key; foreign_key]}
+  numero_terminal: int {constraint: primary_key}
+  nome: varchar(40)
+}
+
+portao: {
+  shape: sql_table
+  aeroporto_iata: char(3) {constraint: [primary_key; foreign_key]}
+  numero_terminal: int {constraint: [primary_key; foreign_key]}
+  numero_portao: int {constraint: primary_key}
+}
+
+assento: {
+  shape: sql_table
+  aeronave_prefixo: varchar(7) {constraint: [primary_key; foreign_key]}
+  numero_assento: varchar(4) {constraint: primary_key}
+  classe: varchar(12)
+}
+
+dependente: {
+  shape: sql_table
+  tripulante_id: int {constraint: [primary_key; foreign_key]}
+  nome: varchar(120) {constraint: primary_key}
+  parentesco: varchar(20)
+  data_nascimento: date
+}
+
+ocorrencia_voo: {
+  shape: sql_table
+  voo_programado_id: int {constraint: [primary_key; foreign_key]}
+  data: date {constraint: primary_key}
+  aeronave_prefixo: varchar(7) {constraint: foreign_key}
+  portao_aeroporto: char(3) {constraint: foreign_key}
+  portao_terminal: int {constraint: foreign_key}
+  portao_numero: int {constraint: foreign_key}
+  status: varchar(12)
+}
+
+bagagem: {
+  shape: sql_table
+  bilhete_id: int {constraint: [primary_key; foreign_key]}
+  numero_volume: int {constraint: primary_key}
+  peso_kg: numeric(5.2)
+}
+
+# ----- TABELAS ASSOCIATIVAS (N:N com atributos) -----
+bilhete: {
+  shape: sql_table
+  id: serial {constraint: primary_key}
+  passageiro_id: int {constraint: foreign_key}
+  voo_programado_id: int {constraint: foreign_key}
+  data_ocorrencia: date {constraint: foreign_key}
+  numero_assento: varchar(4)
+  classe: varchar(12)
+  preco: numeric(10.2)
+  status_checkin: boolean
+}
+
+escalacao: {
+  shape: sql_table
+  tripulante_id: int {constraint: [primary_key; foreign_key]}
+  voo_programado_id: int {constraint: [primary_key; foreign_key]}
+  data_ocorrencia: date {constraint: [primary_key; foreign_key]}
+  funcao_no_voo: varchar(20)
+  horario_apresentacao: time
+}
+
+atendimento_cia: {
+  shape: sql_table
+  companhia_id: int {constraint: [primary_key; foreign_key]}
+  aeroporto_iata: char(3) {constraint: [primary_key; foreign_key]}
+  terminal_base: int
+  data_inicio_operacao: date
+}
+
+# ----- RELACIONAMENTOS (FKs) -----
+rota.aeroporto_origem -> aeroporto.codigo_iata: origem
+rota.aeroporto_destino -> aeroporto.codigo_iata: destino
+terminal.aeroporto_iata -> aeroporto.codigo_iata
+portao.aeroporto_iata -> terminal.aeroporto_iata
+aeronave.modelo_id -> modelo_aeronave.id
+aeronave.companhia_id -> companhia_aerea.id
+assento.aeronave_prefixo -> aeronave.prefixo
+voo_programado.rota_id -> rota.id
+voo_programado.companhia_id -> companhia_aerea.id
+tripulante.companhia_id -> companhia_aerea.id
+dependente.tripulante_id -> tripulante.id
+ocorrencia_voo.voo_programado_id -> voo_programado.id
+ocorrencia_voo.aeronave_prefixo -> aeronave.prefixo
+ocorrencia_voo.portao_numero -> portao.numero_portao
+bilhete.passageiro_id -> passageiro.id
+bilhete.voo_programado_id -> ocorrencia_voo.voo_programado_id
+bagagem.bilhete_id -> bilhete.id
+escalacao.tripulante_id -> tripulante.id
+escalacao.voo_programado_id -> ocorrencia_voo.voo_programado_id
+atendimento_cia.companhia_id -> companhia_aerea.id
+atendimento_cia.aeroporto_iata -> aeroporto.codigo_iata

@@ -1,0 +1,124 @@
+## =============================================================================
+## MER — Rede Aérea (Modelo Entidade-Relacionamento, notação Chen)
+## Render: d2 --layout elk mer.d2 mer.svg
+##
+## Convenção:
+##   - retângulo azul          = entidade forte
+##   - retângulo roxo (borda dupla) = entidade fraca
+##   - losango verde           = relacionamento
+##   - losango verde borda dupla = relacionamento identificador (de entidade fraca)
+##   - losango laranja         = relacionamento N:N (vira tabela associativa, com atributos)
+## =============================================================================
+
+direction: down
+
+classes: {
+  forte: {
+    shape: rectangle
+    style: { fill: "#e3f2fd"; stroke: "#1565c0"; stroke-width: 2; font-color: "#0d47a1"; bold: true }
+  }
+  fraca: {
+    shape: rectangle
+    style: { fill: "#ede7f6"; stroke: "#5e35b1"; stroke-width: 2; font-color: "#4a148c"; bold: true; double-border: true }
+  }
+  rel: {
+    shape: diamond
+    style: { fill: "#f1f8e9"; stroke: "#558b2f"; stroke-width: 2; font-color: "#1b5e20" }
+  }
+  ident: {
+    shape: diamond
+    style: { fill: "#f1f8e9"; stroke: "#558b2f"; stroke-width: 2; font-color: "#1b5e20"; double-border: true }
+  }
+  assoc: {
+    shape: diamond
+    style: { fill: "#fff3e0"; stroke: "#ef6c00"; stroke-width: 2; font-color: "#e65100"; bold: true }
+  }
+}
+
+# ----- ENTIDADES FORTES -----
+aeroporto: Aeroporto { class: forte }
+companhia: "Companhia Aérea" { class: forte }
+modelo: "Modelo Aeronave" { class: forte }
+aeronave: Aeronave { class: forte }
+rota: Rota { class: forte }
+voo: "Voo Programado" { class: forte }
+passageiro: Passageiro { class: forte }
+tripulante: Tripulante { class: forte }
+
+# ----- ENTIDADES FRACAS -----
+terminal: Terminal { class: fraca }
+portao: Portão { class: fraca }
+assento: Assento { class: fraca }
+dependente: Dependente { class: fraca }
+ocorrencia: "Ocorrência Voo" { class: fraca }
+bagagem: Bagagem { class: fraca }
+
+# ----- RELACIONAMENTOS -----
+r_origem: Origem { class: rel }
+r_destino: Destino { class: rel }
+r_segue: Segue { class: rel }
+r_opera: Opera { class: rel }
+r_emprega: Emprega { class: rel }
+r_possui_aero: Possui { class: rel }
+r_tipo: "É do tipo" { class: rel }
+r_executa: Executa { class: rel }
+r_embarca: "Embarca em" { class: rel }
+
+# relacionamentos identificadores (entidade fraca)
+r_possui_term: Possui { class: ident }
+r_contem: Contém { class: ident }
+r_tem_ass: Tem { class: ident }
+r_tem_dep: Tem { class: ident }
+r_instancia: Instancia { class: ident }
+r_despacha: Despacha { class: ident }
+
+# relacionamentos N:N -> tabela associativa (com atributos)
+r_atende: AtendimentoCia { class: assoc }
+r_escala: Escalação { class: assoc }
+r_bilhete: Bilhete { class: assoc }
+
+# ----- LIGAÇÕES (cardinalidade junto a cada entidade) -----
+aeroporto -- r_origem: 1
+r_origem -- rota: N
+aeroporto -- r_destino: 1
+r_destino -- rota: N
+
+aeroporto -- r_possui_term: 1
+r_possui_term -- terminal: N
+terminal -- r_contem: 1
+r_contem -- portao: N
+
+rota -- r_segue: 1
+r_segue -- voo: N
+companhia -- r_opera: 1
+r_opera -- voo: N
+companhia -- r_emprega: 1
+r_emprega -- tripulante: N
+companhia -- r_possui_aero: 1
+r_possui_aero -- aeronave: N
+modelo -- r_tipo: 1
+r_tipo -- aeronave: N
+aeronave -- r_tem_ass: 1
+r_tem_ass -- assento: N
+
+voo -- r_instancia: 1
+r_instancia -- ocorrencia: N
+aeronave -- r_executa: 1
+r_executa -- ocorrencia: N
+portao -- r_embarca: 1
+r_embarca -- ocorrencia: N
+
+tripulante -- r_tem_dep: 1
+r_tem_dep -- dependente: N
+
+# N:N
+aeroporto -- r_atende: N
+r_atende -- companhia: N
+tripulante -- r_escala: N
+r_escala -- ocorrencia: N
+passageiro -- r_bilhete: N
+r_bilhete -- ocorrencia: N
+
+# bagagem é fraca de Bilhete (associativa)
+r_bilhete -- r_despacha: 1
+r_despacha -- bagagem: N
