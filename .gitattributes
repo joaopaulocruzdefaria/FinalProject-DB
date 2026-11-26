@@ -1,4 +1,5 @@
-diagramas/* linguist-vendored=true
-*.d2 linguist-vendored=true
+* text=auto
+*.d2 linguist-vendored
+diagramas/* linguist-vendored
 *.sql linguist-detectable=true
 *.sql linguist-language=PLpgSQL
