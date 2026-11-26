@@ -237,3 +237,4 @@ CREATE TABLE atendimento_cia (
     CONSTRAINT fk_atendimento_cia_companhia FOREIGN KEY (companhia_id) REFERENCES companhia_aerea(id),
     CONSTRAINT fk_atendimento_cia_aeroporto FOREIGN KEY (aeroporto_iata) REFERENCES aeroporto(codigo_iata)
 );
+
